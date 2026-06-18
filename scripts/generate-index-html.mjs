@@ -18,8 +18,11 @@ if (!jsEntry) {
   process.exit(1);
 }
 
+const hasManifest = existsSync(resolve(dist, "manifest.webmanifest"));
+const hasSw = existsSync(resolve(dist, "sw.js"));
+
 const html = `<!doctype html>
-<html lang="en" translate="no" class="notranslate">
+<html lang="pt-BR" translate="no" class="notranslate">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -30,11 +33,25 @@ const html = `<!doctype html>
     <meta property="og:description" content="A modern task management app for personal productivity." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Nexus" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    ${hasManifest ? '<link rel="manifest" href="/manifest.webmanifest" />' : ""}
     ${cssEntry ? `<link rel="stylesheet" href="/assets/${cssEntry}" />` : ""}
   </head>
   <body class="notranslate">
     <div id="root"></div>
     <script type="module" src="/assets/${jsEntry}"></script>
+    ${hasSw ? `<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js");
+  });
+}
+</script>` : ""}
   </body>
 </html>`;
 
