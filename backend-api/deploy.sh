@@ -10,17 +10,22 @@ echo "Region: $AWS_REGION"
 echo ""
 
 # Build TypeScript
-echo "[1/4] Building TypeScript..."
+echo "[1/5] Building TypeScript..."
 npx tsc
 echo "  ✓ Build complete"
 
+# Copy package.json into dist (required for Lambda module resolution)
+echo "[2/5] Copying package.json..."
+cp package.json dist/
+echo "  ✓ package.json copied"
+
 # Copy node_modules
-echo "[2/4] Copying node_modules..."
+echo "[3/5] Copying node_modules..."
 cp -r node_modules dist/
 echo "  ✓ node_modules copied"
 
 # Package
-echo "[3/4] Packaging Lambda..."
+echo "[4/5] Packaging Lambda..."
 cd dist
 PACKAGE="../nexus-api-$(date +%Y%m%d-%H%M%S).zip"
 zip -r "$PACKAGE" . > /dev/null
@@ -28,7 +33,7 @@ cd ..
 echo "  ✓ Package created: $PACKAGE"
 
 # Deploy
-echo "[4/4] Deploying to AWS Lambda..."
+echo "[5/5] Deploying to AWS Lambda..."
 aws lambda update-function-code \
   --function-name "$LAMBDA_NAME" \
   --zip-file "fileb://$PACKAGE" \
