@@ -42,8 +42,8 @@ function getPath(event: APIGatewayProxyEvent): string {
   // HTTP API v2 includes the stage name in rawPath (e.g. /prod/auth/register).
   // Strip the stage prefix so route matching works against the canonical path.
   const stage = (event as any).requestContext?.stage;
-  if (stage && path.startsWith(`/${stage}`)) {
-    path = path.slice(stage.length + 1) || "/";
+  if (stage && path.startsWith(`/${stage}/`)) {
+    path = path.slice(stage.length + 1);
   }
 
   return path;
@@ -60,11 +60,23 @@ function getBody(event: APIGatewayProxyEvent): any {
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    if (getMethod(event) === "OPTIONS") {
+    const rawMethod = getMethod(event);
+    const rawPath = (event as any).rawPath || event.path || "/";
+    const rawStage = (event as any).requestContext?.stage;
+
+    console.log("[NexusHandler]", JSON.stringify({
+      rawPath,
+      method: rawMethod,
+      stage: rawStage,
+      resolvedPath: getPath(event),
+      eventKeys: Object.keys(event),
+    }));
+
+    if (rawMethod === "OPTIONS") {
       return response(204);
     }
 
-    const method = getMethod(event);
+    const method = rawMethod;
     const path = getPath(event);
     const body = getBody(event);
 
