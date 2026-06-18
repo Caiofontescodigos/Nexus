@@ -32,6 +32,11 @@ function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const availableLangs = [
+    { code: "pt-BR", labelKey: "settings.portuguese" },
+    { code: "en", labelKey: "settings.english" },
+    { code: "es", labelKey: "settings.spanish" },
+  ];
 
   const handleDelete = () => {
     logout();
@@ -77,22 +82,17 @@ function SettingsPage() {
                 <Label>{t("settings.language")}</Label>
                 <p className="text-sm text-muted-foreground">{t("settings.languageDesc")}</p>
                 <RadioGroup value={i18n.language} onValueChange={setLanguage} className="flex gap-3">
-                  <Label
-                    htmlFor="pt-BR"
-                    className={`flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:bg-accent ${i18n.language === "pt-BR" ? "border-primary" : ""}`}
-                  >
-                    <RadioGroupItem value="pt-BR" id="pt-BR" />
-                    <Languages className="h-5 w-5" />
-                    <span className="font-medium">{t("settings.portuguese")}</span>
-                  </Label>
-                  <Label
-                    htmlFor="en"
-                    className={`flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:bg-accent ${i18n.language === "en" ? "border-primary" : ""}`}
-                  >
-                    <RadioGroupItem value="en" id="en" />
-                    <Languages className="h-5 w-5" />
-                    <span className="font-medium">{t("settings.english")}</span>
-                  </Label>
+                  {availableLangs.map((lang) => (
+                    <Label
+                      key={lang.code}
+                      htmlFor={lang.code}
+                      className={`flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:bg-accent ${i18n.language === lang.code ? "border-primary" : ""}`}
+                    >
+                      <RadioGroupItem value={lang.code} id={lang.code} />
+                      <Languages className="h-5 w-5" />
+                      <span className="font-medium">{t(lang.labelKey)}</span>
+                    </Label>
+                  ))}
                 </RadioGroup>
               </div>
             </CardContent>

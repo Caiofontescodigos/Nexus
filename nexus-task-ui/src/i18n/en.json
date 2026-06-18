@@ -94,6 +94,7 @@
     "languageDesc": "Choose your preferred language",
     "portuguese": "Português",
     "english": "English",
+    "spanish": "Español",
     "dangerZone": "Danger Zone",
     "dangerDesc": "Irreversible account actions",
     "deleteAccount": "Delete account",
@@ -128,6 +129,12 @@
     "namePlaceholder": "Jane Doe",
     "passwordPlaceholder": "At least 6 characters",
     "confirmPlaceholder": "Repeat your password"
+  },
+  "language": {
+    "switchTo": "Switch language",
+    "pt-BR": "Português",
+    "en": "English",
+    "es": "Español"
   },
   "common": {
     "loading": "Loading...",

@@ -33,6 +33,16 @@ api.interceptors.response.use(
   },
 );
 
+function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error) && error.response?.data?.error) {
+    return error.response.data.error;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "An unexpected error occurred";
+}
+
 function mapBackendTask(t: any): Task {
   return {
     id: t.id,
@@ -88,6 +98,22 @@ export const authApi = {
     localStorage.setItem(USER_KEY, JSON.stringify(updated));
     return updated;
   },
+
+  async uploadAvatar(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const { data } = await api.put("/users/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    if (data.avatarUrl) {
+      const stored = authApi.getStoredUser();
+      if (stored) {
+        const updated = { ...stored, avatarUrl: data.avatarUrl };
+        localStorage.setItem(USER_KEY, JSON.stringify(updated));
+      }
+    }
+    return data.avatarUrl || "";
+  },
 };
 
 export const tasksApi = {
@@ -124,4 +150,15 @@ export const tasksApi = {
     const { data } = await api.get("/tasks/stats");
     return data;
   },
+
+  async uploadAttachment(taskId: string, file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post(`/tasks/${taskId}/attachments`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.url || "";
+  },
 };
+
+export { getErrorMessage };

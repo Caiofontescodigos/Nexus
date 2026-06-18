@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/types";
 
 const avatarColors = [
@@ -45,11 +45,22 @@ function getColor(name: string): string {
 }
 
 interface Props {
-  user: Pick<User, "name">;
+  user: Pick<User, "name" | "avatarUrl">;
   className?: string;
 }
 
 export function UserAvatar({ user, className }: Props) {
+  if (user.avatarUrl) {
+    return (
+      <Avatar className={className}>
+        <AvatarImage src={user.avatarUrl} alt={user.name} />
+        <AvatarFallback className={`${getColor(user.name)} text-white text-xs`}>
+          {getInitials(user.name)}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
   const initials = getInitials(user.name);
   const color = getColor(user.name);
   return (

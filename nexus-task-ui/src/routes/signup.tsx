@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { getErrorMessage } from "@/services/api";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User } from "lucide-react";
+import { Loader2, Mail, Lock, User, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/signup")({
@@ -20,21 +21,25 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const { signup } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirm) { toast.error(t("auth.passwordsDontMatch")); return; }
-    if (password.length < 6) { toast.error(t("auth.passwordTooShort")); return; }
+    setError("");
+    if (password !== confirm) { setError(t("auth.passwordsDontMatch")); toast.error(t("auth.passwordsDontMatch")); return; }
+    if (password.length < 6) { setError(t("auth.passwordTooShort")); toast.error(t("auth.passwordTooShort")); return; }
     setLoading(true);
     try {
       await signup(name, email, password);
       toast.success(t("auth.accountCreated"));
       navigate({ to: "/dashboard" });
-    } catch {
-      toast.error(t("auth.couldNotCreate"));
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -71,6 +76,12 @@ function SignupPage() {
             <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t("auth.confirmPlaceholder")} className="pl-10" required />
           </div>
         </div>
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("auth.creating")}</> : t("auth.createAccount")}
         </Button>

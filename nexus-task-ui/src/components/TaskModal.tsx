@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Paperclip, Loader2 } from "lucide-react";
+import { tasksApi } from "@/services/api";
+import { toast } from "sonner";
 import type { Task, TaskStatus } from "@/types";
 
 interface Props {
@@ -32,6 +35,8 @@ export function TaskModal({ open, onOpenChange, task, onSubmit }: Props) {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>("pending");
   const [priority, setPriority] = useState<NonNullable<Task["priority"]>>("medium");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -47,6 +52,21 @@ export function TaskModal({ open, onOpenChange, task, onSubmit }: Props) {
     if (!title.trim()) return;
     onSubmit({ title: title.trim(), description: description.trim(), status, priority });
     onOpenChange(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !task) return;
+    setUploading(true);
+    try {
+      await tasksApi.uploadAttachment(task.id, file);
+      toast.success("Arquivo anexado com sucesso");
+    } catch {
+      toast.error("Erro ao anexar arquivo. Verifique se o backend suporta upload.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -104,6 +124,18 @@ export function TaskModal({ open, onOpenChange, task, onSubmit }: Props) {
               </Select>
             </div>
           </div>
+          {task && (
+            <div className="space-y-2">
+              <Label>Attachment</Label>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  {uploading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Paperclip className="mr-1 h-4 w-4" />}
+                  {uploading ? "Uploading..." : "Attach file"}
+                </Button>
+                <input ref={fileInputRef} type="file" onChange={handleFileUpload} className="hidden" />
+              </div>
+            </div>
+          )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit">{task ? "Save changes" : "Create task"}</Button>
