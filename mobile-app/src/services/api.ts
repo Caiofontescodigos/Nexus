@@ -2,7 +2,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
 const TOKEN_KEY = "nexus-token";
-const API_URL = "https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod";
+const API_URL = "https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com";
 
 const api = axios.create({ baseURL: API_URL, headers: { "Content-Type": "application/json" } });
 
