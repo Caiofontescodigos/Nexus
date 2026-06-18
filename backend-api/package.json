@@ -2,7 +2,7 @@
   "name": "nexus-backend-api",
   "version": "1.0.0",
   "private": true,
-
+  "type": "commonjs",
   "scripts": {
     "build": "tsc && cp package.json dist/",
     "postbuild": "cp -r node_modules dist/",

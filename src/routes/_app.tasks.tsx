@@ -31,13 +31,16 @@ function TasksPage() {
     return tasks
       .filter((t) => (filter === "all" ? true : t.status === filter))
       .filter((t) =>
-        query
-          ? (t.title + " " + t.description).toLowerCase().includes(query.toLowerCase())
-          : true
+        query ? (t.title + " " + t.description).toLowerCase().includes(query.toLowerCase()) : true,
       );
   }, [tasks, filter, query]);
 
-  const handleSubmit = (data: { title: string; description: string; status: TaskStatus; priority: NonNullable<Task["priority"]> }) => {
+  const handleSubmit = (data: {
+    title: string;
+    description: string;
+    status: TaskStatus;
+    priority: NonNullable<Task["priority"]>;
+  }) => {
     if (editing) {
       updateTask(editing.id, data);
       toast.success(t("tasks.taskUpdated"));
@@ -56,13 +59,24 @@ function TasksPage() {
   return (
     <>
       <AppHeader title={t("tasks.title")} />
-      <main className="flex-1 space-y-5 p-4 sm:p-6 lg:p-8 animate-[fade-in_0.4s_ease-out]">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="truncate text-2xl font-bold tracking-tight">{t("tasks.yourTasks")}</h2>
-            <p className="text-sm text-muted-foreground">{tasks.length} {t("tasks.total")} · {tasks.filter(t => t.status === "completed").length} {t("tasks.done")}</p>
+      <main className="flex-1 space-y-4 p-4 sm:space-y-5 sm:p-6 lg:p-8 animate-[fade-in_0.4s_ease-out]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+              {t("tasks.yourTasks")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {tasks.length} {t("tasks.total")} ·{" "}
+              {tasks.filter((t) => t.status === "completed").length} {t("tasks.done")}
+            </p>
           </div>
-          <Button onClick={() => { setEditing(null); setOpen(true); }} className="shrink-0">
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+            className="shrink-0 w-full sm:w-auto"
+          >
             <Plus className="mr-2 h-4 w-4" /> {t("tasks.newTask")}
           </Button>
         </div>
@@ -77,14 +91,24 @@ function TasksPage() {
               className="pl-10"
             />
           </div>
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-            <TabsList>
-              <TabsTrigger value="all">{t("tasks.all")}</TabsTrigger>
-              <TabsTrigger value="pending">{t("tasks.pending")}</TabsTrigger>
-              <TabsTrigger value="in_progress">{t("tasks.inProgress")}</TabsTrigger>
-              <TabsTrigger value="completed">{t("tasks.completed")}</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+              <TabsList className="w-full sm:w-auto">
+                <TabsTrigger value="all" className="flex-1 sm:flex-none">
+                  {t("tasks.all")}
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="flex-1 sm:flex-none">
+                  {t("tasks.pending")}
+                </TabsTrigger>
+                <TabsTrigger value="in_progress" className="flex-1 sm:flex-none">
+                  {t("tasks.inProgress")}
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="flex-1 sm:flex-none">
+                  {t("tasks.completed")}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
 
         {loading ? (
@@ -98,9 +122,7 @@ function TasksPage() {
             icon={ListChecks}
             title={query || filter !== "all" ? t("tasks.noMatchingTasks") : t("tasks.noTasksYet")}
             description={
-              query || filter !== "all"
-                ? t("tasks.noMatchingDesc")
-                : t("tasks.noTasksDesc")
+              query || filter !== "all" ? t("tasks.noMatchingDesc") : t("tasks.noTasksDesc")
             }
             action={
               !query && filter === "all" ? (
@@ -116,7 +138,10 @@ function TasksPage() {
               <TaskCard
                 key={task.id}
                 task={task}
-                onEdit={(t) => { setEditing(t); setOpen(true); }}
+                onEdit={(t) => {
+                  setEditing(t);
+                  setOpen(true);
+                }}
                 onDelete={handleDelete}
                 onToggle={toggleComplete}
               />
@@ -126,7 +151,10 @@ function TasksPage() {
 
         <TaskModal
           open={open}
-          onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}
+          onOpenChange={(v) => {
+            setOpen(v);
+            if (!v) setEditing(null);
+          }}
           task={editing}
           onSubmit={handleSubmit}
         />

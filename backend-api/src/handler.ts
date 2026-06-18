@@ -46,6 +46,11 @@ function getPath(event: APIGatewayProxyEvent): string {
     path = path.slice(stage.length + 1);
   }
 
+  // Normaliza path sem barra inicial
+  if (!path.startsWith("/")) {
+    path = "/" + path;
+  }
+
   return path;
 }
 
@@ -59,24 +64,51 @@ function getBody(event: APIGatewayProxyEvent): any {
 }
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  if (
+    (event as any).requestContext?.http?.method === "OPTIONS" ||
+    (event as any).httpMethod === "OPTIONS"
+  ) {
+    return {
+      statusCode: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "*",
+      },
+      body: "",
+    };
+  }
+
   try {
-    const rawMethod = getMethod(event);
-    const rawPath = (event as any).rawPath || event.path || "/";
-    const rawStage = (event as any).requestContext?.stage;
+    console.log(
+      "ROUTE_DEBUG",
+      JSON.stringify(
+        {
+          version: (event as any).version,
+          routeKey: (event as any).routeKey,
+          rawPath: (event as any).rawPath,
+          path: (event as any).path,
+          httpMethod: (event as any).httpMethod,
+          resource: (event as any).resource,
+          stage: (event as any).requestContext?.stage,
+          method: (event as any).requestContext?.http?.method || (event as any).httpMethod,
+          methodFromContext: (event as any).requestContext?.http?.method,
+          methodFromEvent: (event as any).httpMethod,
+          headers: (event as any).headers,
+          queryString: (event as any).rawQueryString || (event as any).queryStringParameters,
+          pathParameters: (event as any).pathParameters,
+          requestContext: JSON.stringify((event as any).requestContext),
+          isBase64Encoded: (event as any).isBase64Encoded,
+          eventKeys: Object.keys(event),
+          eventType: typeof event,
+          eventConstructor: event.constructor?.name,
+        },
+        null,
+        2,
+      ),
+    );
 
-    console.log("[NexusHandler]", JSON.stringify({
-      rawPath,
-      method: rawMethod,
-      stage: rawStage,
-      resolvedPath: getPath(event),
-      eventKeys: Object.keys(event),
-    }));
-
-    if (rawMethod === "OPTIONS") {
-      return response(204);
-    }
-
-    const method = rawMethod;
+    const method = getMethod(event);
     const path = getPath(event);
     const body = getBody(event);
 
@@ -150,6 +182,24 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (path === "/health" && method === "GET") {
       return response(200, { status: "ok", service: "nexus-api" });
     }
+
+    console.log(
+      "ROUTE_NOT_MATCHED",
+      JSON.stringify(
+        {
+          resolvedPath: path,
+          method,
+          rawPath: (event as any).rawPath,
+          path: (event as any).path,
+          stage: (event as any).requestContext?.stage,
+          httpMethod: (event as any).httpMethod,
+          contextMethod: (event as any).requestContext?.http?.method,
+          routeKey: (event as any).routeKey,
+        },
+        null,
+        2,
+      ),
+    );
 
     return response(404, { error: "Route not found" });
   } catch (error) {

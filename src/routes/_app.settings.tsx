@@ -47,8 +47,8 @@ function SettingsPage() {
   return (
     <>
       <AppHeader title={t("settings.title")} />
-      <main className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8 animate-[fade-in_0.4s_ease-out]">
-        <div className="mx-auto max-w-2xl space-y-6">
+      <main className="flex-1 space-y-5 p-4 sm:space-y-6 sm:p-6 lg:p-8 animate-[fade-in_0.4s_ease-out]">
+        <div className="mx-auto max-w-2xl space-y-5 sm:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>{t("settings.appearance")}</CardTitle>
@@ -58,7 +58,11 @@ function SettingsPage() {
               <div className="space-y-3">
                 <Label>{t("settings.theme")}</Label>
                 <p className="text-sm text-muted-foreground">{t("settings.themeDesc")}</p>
-                <RadioGroup value={theme} onValueChange={(v) => setTheme(v as "light" | "dark")} className="flex gap-3">
+                <RadioGroup
+                  value={theme}
+                  onValueChange={(v) => setTheme(v as "light" | "dark")}
+                  className="flex flex-col gap-3 sm:flex-row"
+                >
                   <Label
                     htmlFor="light"
                     className={`flex flex-1 cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:bg-accent ${theme === "light" ? "border-primary" : ""}`}
@@ -81,7 +85,11 @@ function SettingsPage() {
               <div className="space-y-3">
                 <Label>{t("settings.language")}</Label>
                 <p className="text-sm text-muted-foreground">{t("settings.languageDesc")}</p>
-                <RadioGroup value={i18n.language} onValueChange={setLanguage} className="flex gap-3">
+                <RadioGroup
+                  value={i18n.language}
+                  onValueChange={setLanguage}
+                  className="flex flex-col gap-3 sm:flex-row"
+                >
                   {availableLangs.map((lang) => (
                     <Label
                       key={lang.code}
@@ -117,7 +125,10 @@ function SettingsPage() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t("settings.cancel")}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground"
+                    >
                       {t("settings.confirm")}
                     </AlertDialogAction>
                   </AlertDialogFooter>

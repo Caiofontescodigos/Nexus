@@ -17,7 +17,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Mail, User as UserIcon, LogOut, CheckCircle2, Clock, ListChecks, Flame, Pencil, Camera } from "lucide-react";
+import {
+  Mail,
+  User as UserIcon,
+  LogOut,
+  CheckCircle2,
+  Clock,
+  ListChecks,
+  Flame,
+  Pencil,
+  Camera,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
@@ -51,8 +61,14 @@ function ProfilePage() {
 
   const handleSave = async () => {
     const trimmed = name.trim();
-    if (trimmed.length < 2) { toast.error("Nome deve ter no mínimo 2 caracteres"); return; }
-    if (trimmed.length > 50) { toast.error("Nome deve ter no máximo 50 caracteres"); return; }
+    if (trimmed.length < 2) {
+      toast.error("Nome deve ter no mínimo 2 caracteres");
+      return;
+    }
+    if (trimmed.length > 50) {
+      toast.error("Nome deve ter no máximo 50 caracteres");
+      return;
+    }
     setSaving(true);
     try {
       await updateUser({ name: trimmed });
@@ -89,14 +105,17 @@ function ProfilePage() {
     <>
       <AppHeader title={t("profile.title")} />
       <main className="flex-1 p-4 sm:p-6 lg:p-8 animate-[fade-in_0.4s_ease-out]">
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
           <Card className="overflow-hidden">
-            <div className="h-32 bg-gradient-to-br from-primary via-primary-glow to-primary" />
-            <CardContent className="-mt-12 p-6">
-              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex items-end gap-4">
+            <div className="h-24 bg-gradient-to-br from-primary via-primary-glow to-primary sm:h-32" />
+            <CardContent className="-mt-10 p-4 sm:-mt-12 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end sm:gap-4">
                   <div className="relative group">
-                    <UserAvatar user={user} className="h-24 w-24 border-4 border-background shadow-lg" />
+                    <UserAvatar
+                      user={user}
+                      className="h-20 w-20 border-4 border-background shadow-lg sm:h-24 sm:w-24"
+                    />
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
@@ -112,16 +131,16 @@ function ProfilePage() {
                       className="hidden"
                     />
                   </div>
-                  <div className="pb-2">
-                    <h2 className="text-2xl font-bold">{user.name}</h2>
+                  <div className="text-center sm:text-left sm:pb-2">
+                    <h2 className="text-xl font-bold sm:text-2xl">{user.name}</h2>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleEdit}>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={handleEdit} className="w-full sm:w-auto">
                     <Pencil className="mr-2 h-4 w-4" /> Editar Perfil
                   </Button>
-                  <Button variant="outline" onClick={logout}>
+                  <Button variant="outline" onClick={logout} className="w-full sm:w-auto">
                     <LogOut className="mr-2 h-4 w-4" /> {t("profile.signOut")}
                   </Button>
                 </div>
@@ -148,7 +167,9 @@ function ProfilePage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? "Salvando..." : "Salvar"}
                 </Button>
@@ -156,7 +177,7 @@ function ProfilePage() {
             </DialogContent>
           </Dialog>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>{t("profile.accountInfo")}</CardTitle>
@@ -182,7 +203,8 @@ function ProfilePage() {
                   </div>
                 </div>
                 <Badge variant="secondary" className="gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-success" /> {t("profile.activeAccount")}
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />{" "}
+                  {t("profile.activeAccount")}
                 </Badge>
               </CardContent>
             </Card>
@@ -194,10 +216,30 @@ function ProfilePage() {
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: ListChecks, label: t("profile.total"), value: tasks.length, color: "text-primary bg-primary/10" },
-                  { icon: CheckCircle2, label: t("profile.completed"), value: completed, color: "text-success bg-success/10" },
-                  { icon: Clock, label: t("profile.pending"), value: pending, color: "text-warning-foreground bg-warning/15" },
-                  { icon: Flame, label: t("profile.completion"), value: `${rate}%`, color: "text-destructive bg-destructive/10" },
+                  {
+                    icon: ListChecks,
+                    label: t("profile.total"),
+                    value: tasks.length,
+                    color: "text-primary bg-primary/10",
+                  },
+                  {
+                    icon: CheckCircle2,
+                    label: t("profile.completed"),
+                    value: completed,
+                    color: "text-success bg-success/10",
+                  },
+                  {
+                    icon: Clock,
+                    label: t("profile.pending"),
+                    value: pending,
+                    color: "text-warning-foreground bg-warning/15",
+                  },
+                  {
+                    icon: Flame,
+                    label: t("profile.completion"),
+                    value: `${rate}%`,
+                    color: "text-destructive bg-destructive/10",
+                  },
                 ].map((s) => (
                   <div key={s.label} className="rounded-xl border border-border p-4">
                     <div className={`grid h-9 w-9 place-items-center rounded-lg ${s.color}`}>
