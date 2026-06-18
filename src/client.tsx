@@ -1,26 +1,17 @@
-import { StrictMode, startTransition } from "react";
-import { hydrateRoot, createRoot } from "react-dom/client";
-import { StartClient } from "@tanstack/react-start/client";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "@tanstack/react-router";
+import { getRouter } from "./router";
 
-function renderApp() {
-  const root = createRoot(document.getElementById("root") ?? document);
-  root.render(
-    <StrictMode>
-      <StartClient />
-    </StrictMode>,
-  );
+const router = getRouter();
+
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Root element not found");
 }
 
-startTransition(() => {
-  try {
-    hydrateRoot(
-      document,
-      <StrictMode>
-        <StartClient />
-      </StrictMode>,
-    );
-  } catch (err) {
-    console.error("[Nexus Client Init Error]", err);
-    renderApp();
-  }
-});
+createRoot(rootElement).render(
+  <StrictMode>
+    <RouterProvider router={router} />
+  </StrictMode>,
+);

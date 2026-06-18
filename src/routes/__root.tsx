@@ -100,17 +100,13 @@ function RootShell({ children }: { children: ReactNode }) {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
   return (
-    <html lang={i18n.language} translate="no" className="notranslate">
-      <head>
-        <HeadContent />
-        <meta name="google" content="notranslate" />
-      </head>
-      <body className="notranslate">
-        {children}
-        <LanguageSwitcher />
-        <Scripts />
-      </body>
-    </html>
+    <>
+      <HeadContent />
+      <meta name="google" content="notranslate" />
+      {children}
+      <LanguageSwitcher />
+      <Scripts />
+    </>
   );
 }
 

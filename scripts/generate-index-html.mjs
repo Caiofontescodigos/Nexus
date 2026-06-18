@@ -33,6 +33,7 @@ const html = `<!doctype html>
     ${cssEntry ? `<link rel="stylesheet" href="/assets/${cssEntry}" />` : ""}
   </head>
   <body class="notranslate">
+    <div id="root"></div>
     <script type="module" src="/assets/${jsEntry}"></script>
   </body>
 </html>`;
