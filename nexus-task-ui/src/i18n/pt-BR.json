@@ -94,6 +94,7 @@
     "languageDesc": "Escolha seu idioma preferido",
     "portuguese": "Português",
     "english": "English",
+    "spanish": "Espanhol",
     "dangerZone": "Zona de Perigo",
     "dangerDesc": "Ações irreversíveis da conta",
     "deleteAccount": "Excluir conta",
@@ -128,6 +129,12 @@
     "namePlaceholder": "João Silva",
     "passwordPlaceholder": "Pelo menos 6 caracteres",
     "confirmPlaceholder": "Repita sua senha"
+  },
+  "language": {
+    "switchTo": "Trocar idioma",
+    "pt-BR": "Português",
+    "en": "English",
+    "es": "Espanhol"
   },
   "common": {
     "loading": "Carregando...",

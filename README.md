@@ -6,9 +6,9 @@ Sistema distribuído de gerenciamento de tarefas desenvolvido como projeto final
 
 ## Objetivo
 
-Nexus é um workspace moderno para produtividade pessoal. Permite que usuários criem, organizem e acompanhem tarefas com suporte a status, prioridades, estatísticas e gráficos de desempenho. O sistema adota uma arquitetura de três camadas (frontend, backend, banco de dados) com comunicação via REST API.
+Nexus é um workspace moderno para produtividade pessoal. Permite que usuários criem, organizem e acompanhem tarefas com suporte a status, prioridades, estatísticas e gráficos de desempenho. O sistema adota arquitetura serverless na AWS com comunicação via REST API.
 
-## Arquitetura — 3 Camadas
+## Arquitetura — Serverless
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -16,18 +16,21 @@ Nexus é um workspace moderno para produtividade pessoal. Permite que usuários 
 │          (Web + Mobile React Native)             │
 │              Porta 3000 / 80                     │
 ├─────────────────────────────────────────────────┤
-│                   Backend                        │
-│              Express + Prisma                    │
-│              Porta 3001                          │
+│           API Gateway (HTTP API)                 │
+│   https://w1xqigg0v8.execute-api.us-east-1       │
+│            .amazonaws.com/prod                   │
 ├─────────────────────────────────────────────────┤
-│              PostgreSQL 16                       │
-│              Porta 5432                          │
+│              AWS Lambda (NexusApi)                │
+│           ANY /{proxy+} → handler.ts             │
+├─────────────────────────────────────────────────┤
+│              Amazon DynamoDB                      │
+│         NexusUsers + NexusTasks                  │
 └─────────────────────────────────────────────────┘
 ```
 
 - **Camada de Apresentação**: Aplicação web (React + TanStack Start) e mobile (React Native)
-- **Camada de Lógica**: API REST em Express com arquitetura em camadas (routes → controllers → services → repositories)
-- **Camada de Dados**: PostgreSQL 16 com Prisma ORM
+- **Camada de Lógica**: AWS Lambda com TypeScript, roteamento interno via API Gateway Proxy
+- **Camada de Dados**: Amazon DynamoDB (NoSQL) com tabelas NexusUsers e NexusTasks
 
 ## Tecnologias
 
@@ -47,39 +50,35 @@ Nexus é um workspace moderno para produtividade pessoal. Permite que usuários 
 - Axios
 
 ### Backend
-- [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/)
+- [AWS Lambda](https://aws.amazon.com/lambda/) — computação serverless
+- [Amazon API Gateway](https://aws.amazon.com/api-gateway/) — HTTP API
+- [Amazon DynamoDB](https://aws.amazon.com/dynamodb/) — banco NoSQL
+- [AWS SDK v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/) — acesso DynamoDB
 - [TypeScript](https://www.typescriptlang.org/)
-- [Prisma](https://www.prisma.io/) ORM
-- [PostgreSQL](https://www.postgresql.org/)
 - [JWT](https://jwt.io/) — autenticação
 - [Zod](https://zod.dev/) — validação de schemas
-- [Swagger](https://swagger.io/) — documentação da API
 
 ### Infraestrutura
-- [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/)
-- Nginx — servindo o frontend em produção
+- [AWS Lambda](https://aws.amazon.com/lambda/)
+- [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
+- [Amazon DynamoDB](https://aws.amazon.com/dynamodb/)
+- [AWS CLI](https://aws.amazon.com/cli/) — deploy via linha de comando
 
 ## Estrutura do Projeto
 
 ```
 Nexus-task/
-├── backend-api/                  # API REST (Express + Prisma)
-│   ├── prisma/
-│   │   ├── schema.prisma         # Modelo de dados
-│   │   └── migrations/           # Migrações do banco
+├── backend-api/                  # AWS Lambda (API Gateway + DynamoDB)
 │   ├── src/
-│   │   ├── config/               # Configurações (DB, env)
-│   │   ├── controllers/          # Controladores das rotas
-│   │   ├── middlewares/          # Middlewares (auth, validate)
-│   │   ├── repositories/         # Acesso a dados (Prisma)
-│   │   ├── routes/               # Definição de rotas
+│   │   ├── config/               # Configurações (env, tabelas)
+│   │   ├── middlewares/          # Middleware JWT para Lambda
+│   │   ├── repositories/         # Acesso a dados (DynamoDB)
 │   │   ├── schemas/              # Schemas de validação (Zod)
 │   │   ├── services/             # Lógica de negócio
 │   │   ├── types/                # Tipos TypeScript
-│   │   ├── utils/                # Utilitários (JWT, errors)
-│   │   ├── server.ts             # Entry point
-│   │   └── seed.ts               # Seed de dados
-│   ├── Dockerfile
+│   │   ├── utils/                # Utilitários (DynamoDB, JWT, errors)
+│   │   └── handler.ts            # Entry point Lambda
+│   ├── deploy.sh                 # Script de deploy
 │   └── package.json
 │
 ├── nexus-task-ui/                # Frontend Web (TanStack Start)
@@ -119,41 +118,33 @@ Nexus-task/
 └── README.md
 ```
 
-## Como Executar Localmente
+## Como Executar
 
 ### Pré-requisitos
 
 - Node.js ≥ 20
-- PostgreSQL 16
 - npm
+- AWS CLI (para deploy)
 
-### 1. Banco de Dados
+### 1. Backend (Lambda)
 
-```bash
-# Crie o banco PostgreSQL
-createdb nexusdb
-
-# Ou via Docker
-docker run -d --name nexus-postgres \
-  -e POSTGRES_USER=nexus \
-  -e POSTGRES_PASSWORD=nexus123 \
-  -e POSTGRES_DB=nexusdb \
-  -p 5432:5432 \
-  postgres:16-alpine
-```
-
-### 2. Backend
+O backend roda como uma função AWS Lambda. Para desenvolvimento local:
 
 ```bash
 cd backend-api
-cp .env.example .env        # Ajuste as credenciais
 npm install
-npx prisma migrate deploy   # Aplica migrações
-npm run seed                # Dados iniciais (opcional)
-npm run dev                 # Inicia em http://localhost:3001
+npm run build               # Compila TypeScript
 ```
 
-### 3. Frontend Web
+Para fazer deploy na Lambda existente:
+
+```bash
+cd backend-api
+chmod +x deploy.sh
+./deploy.sh NexusApi us-east-1
+```
+
+### 2. Frontend Web
 
 ```bash
 cd nexus-task-ui
@@ -161,7 +152,12 @@ npm install
 npm run dev                 # Inicia em http://localhost:3000
 ```
 
-### 4. Mobile (opcional)
+O frontend aponta para a API Gateway em:
+```
+https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod
+```
+
+### 3. Mobile (opcional)
 
 ```bash
 cd mobile-app
@@ -169,18 +165,7 @@ npm install
 npx expo start
 ```
 
-## Como Executar com Docker
-
-```bash
-docker-compose up -d --build
-```
-
-Isso inicia três containers:
-- **postgres** — banco de dados (porta 5432)
-- **backend** — API Express (porta 3001)
-- **frontend** — Nginx servindo o build (porta 3000)
-
-> O backend executa `prisma migrate deploy` automaticamente na inicialização.
+> A API não requer Docker ou PostgreSQL — toda a camada de dados utiliza Amazon DynamoDB.
 
 ## Endpoints Principais
 
@@ -218,9 +203,7 @@ Isso inicia três containers:
 
 ### Documentação
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api-docs` | Swagger UI |
+A documentação OpenAPI está disponível em `docs/swagger.yaml`.
 
 ## Funcionalidades Implementadas
 
@@ -249,25 +232,21 @@ Isso inicia três containers:
 
 ### Backend
 
-- [x] API RESTful
-- [x] Arquitetura em camadas (routes → controllers → services → repositories)
+- [x] API RESTful serverless (AWS Lambda + API Gateway)
+- [x] Armazenamento NoSQL (Amazon DynamoDB)
 - [x] Autenticação com JWT
 - [x] Validação com Zod
 - [x] Tratamento centralizado de erros
-- [x] Documentação Swagger
-- [x] Prisma ORM com migrations
-- [x] Seed de dados
-- [x] Docker multi-estágio
 
 ## Requisitos da Disciplina Atendidos
 
-1. **Sistema Distribuído** — Arquitetura com frontend, backend e banco em camadas separadas, comunicando via REST
+1. **Sistema Distribuído** — Arquitetura serverless com frontend, API Gateway, Lambda e DynamoDB
 2. **API RESTful** — Endpoints seguindo padrões REST com métodos HTTP semânticos
 3. **Autenticação Distribuída** — JWT com tokens armazenados no cliente
 4. **Comunicação Cliente-Servidor** — Axios com interceptors para tratamento de tokens e erros
 5. **Internacionalização** — Suporte a múltiplos idiomas (pt-BR e en)
-6. **Conteinerização** — Docker Compose com 3 serviços
-7. **Persistência** — PostgreSQL com Prisma ORM
+6. **Computação Serverless** — AWS Lambda sem gerenciamento de servidores
+7. **Persistência NoSQL** — Amazon DynamoDB com tabelas NexusUsers e NexusTasks
 8. **Frontend Múltiplo** — Web (TanStack Start) + Mobile (React Native) compartilhando a mesma API
 
 ---

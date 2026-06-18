@@ -1,6 +1,4 @@
-import type { Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import type { AuthenticatedRequest } from "../types/index.js";
 
 export class AppError extends Error {
   constructor(
@@ -12,23 +10,30 @@ export class AppError extends Error {
   }
 }
 
-export function errorHandler(err: Error, _req: AuthenticatedRequest, res: Response, _next: NextFunction): void {
+export function formatError(err: Error): { statusCode: number; body: string } {
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
-    return;
+    return {
+      statusCode: err.statusCode,
+      body: JSON.stringify({ error: err.message }),
+    };
   }
 
   if (err instanceof ZodError) {
-    res.status(400).json({
-      error: "Validation error",
-      details: err.errors.map((e) => ({
-        field: e.path.join("."),
-        message: e.message,
-      })),
-    });
-    return;
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: "Validation error",
+        details: err.errors.map((e) => ({
+          field: e.path.join("."),
+          message: e.message,
+        })),
+      }),
+    };
   }
 
   console.error("Unhandled error:", err);
-  res.status(500).json({ error: "Internal server error" });
+  return {
+    statusCode: 500,
+    body: JSON.stringify({ error: "Internal server error" }),
+  };
 }

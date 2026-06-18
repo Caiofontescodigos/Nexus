@@ -17,10 +17,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Mail, User as UserIcon, LogOut, CheckCircle2, Clock, ListChecks, Flame, Pencil } from "lucide-react";
+import { Mail, User as UserIcon, LogOut, CheckCircle2, Clock, ListChecks, Flame, Pencil, Camera } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { authApi } from "@/services/api";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({ meta: [{ title: "Profile — Nexus" }] }),
@@ -34,6 +35,8 @@ function ProfilePage() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
@@ -62,6 +65,26 @@ function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      await authApi.uploadAvatar(file);
+      toast.success("Foto de perfil atualizada");
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao enviar foto. Verifique se o backend suporta upload.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <>
       <AppHeader title={t("profile.title")} />
@@ -72,7 +95,23 @@ function ProfilePage() {
             <CardContent className="-mt-12 p-6">
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="flex items-end gap-4">
-                  <UserAvatar user={user} className="h-24 w-24 border-4 border-background shadow-lg" />
+                  <div className="relative group">
+                    <UserAvatar user={user} className="h-24 w-24 border-4 border-background shadow-lg" />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <Camera className="h-6 w-6 text-white" />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </div>
                   <div className="pb-2">
                     <h2 className="text-2xl font-bold">{user.name}</h2>
                     <p className="text-sm text-muted-foreground">{user.email}</p>

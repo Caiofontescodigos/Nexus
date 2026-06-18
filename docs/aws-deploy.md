@@ -1,96 +1,184 @@
-# Deploy AWS
+# Deploy Nexus no AWS Lambda
 
-## 1. Banco de Dados (RDS PostgreSQL)
+## 1. Pré-requisitos
 
-```bash
-# Criar instância RDS PostgreSQL
-aws rds create-db-instance \
-  --db-instance-identifier nexus-db \
-  --db-instance-class db.t3.micro \
-  --engine postgres \
-  --master-username nexus \
-  --master-user-password nexus123 \
-  --allocated-storage 20 \
-  --publicly-accessible
+- Conta AWS com acesso ao console
+- AWS CLI instalado e configurado (`aws configure`)
+- Node.js ≥ 20
 
-# Obter endpoint
-aws rds describe-db-instances --db-instance-identifier nexus-db \
-  --query "DBInstances[0].Endpoint.Address"
+## 2. Estrutura Serverless
+
+```
+Frontend (React + TanStack Start)
+        |
+        | HTTPS
+        v
+API Gateway (https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod)
+        |
+        | Proxy Integration (ANY /{proxy+})
+        v
+AWS Lambda (NexusApi)
+        |
+        v
+DynamoDB (NexusUsers, NexusTasks)
 ```
 
-Atualizar `DATABASE_URL` no backend com o endpoint do RDS.
+## 3. Infraestrutura AWS Existente
 
-## 2. Backend (EC2 com Docker)
+| Recurso | Nome | Região |
+|---------|------|--------|
+| API Gateway | `w1xqigg0v8` | us-east-1 |
+| Lambda | `NexusApi` | us-east-1 |
+| DynamoDB | `NexusUsers` | us-east-1 |
+| DynamoDB | `NexusTasks` | us-east-1 |
 
-```bash
-# Conectar na EC2
-ssh -i ~/.ssh/nexus-key.pem ubuntu@<ec2-public-ip>
+## 4. Tabelas DynamoDB
 
-# Instalar Docker
-sudo apt update
-sudo apt install -y docker.io docker-compose-plugin
-sudo systemctl enable docker
-sudo usermod -aG docker ubuntu
+### NexusUsers
 
-# Clonar repositório
-git clone <repo-url> /home/ubuntu/nexus
-cd /home/ubuntu/nexus
+| Atributo | Tipo | Descrição |
+|----------|------|-----------|
+| userId | String (PK) | UUID do usuário |
+| name | String | Nome do usuário |
+| email | String | Email (único) |
+| passwordHash | String | Hash bcrypt da senha |
+| createdAt | String | ISO timestamp |
 
-# Criar .env.production
-cat > .env <<EOF
-DATABASE_URL=postgresql://nexus:nexus123@<rds-endpoint>:5432/nexusdb?schema=public
-JWT_SECRET=<generate-secure-secret>
-PORT=3001
-NODE_ENV=production
-EOF
+**GSI:** `email-index` (Partition Key: email)
 
-# Executar com Docker Compose
-docker compose -f docker-compose.prod.yml up -d --build
-```
+### NexusTasks
 
-## 3. Frontend (Amplify)
+| Atributo | Tipo | Descrição |
+|----------|------|-----------|
+| taskId | String (PK) | UUID da tarefa |
+| userId | String | Dono da tarefa |
+| title | String | Título |
+| description | String | Descrição |
+| completed | Boolean | Status de conclusão |
+| status | String | pending / in_progress / completed |
+| priority | String | low / medium / high |
+| createdAt | String | ISO timestamp |
+| updatedAt | String | ISO timestamp |
 
-```bash
-# Conectar Amplify ao repositório
-aws amplify create-app \
-  --name nexus-frontend \
-  --repository <repo-url> \
-  --platform web
+**GSI:** `userId-index` (Partition Key: userId, Sort Key: createdAt)
 
-# Configurar variáveis de ambiente
-aws amplify update-app \
-  --app-id <app-id> \
-  --environment-variables VITE_API_URL=https://api.nexus.grupoX.sd.ufersa.dev.br
+## 5. Deploy da Lambda
 
-# Fazer deploy
-aws amplify start-deployment \
-  --app-id <app-id> \
-  --branch main
-```
-
-## 4. Docker Compose Produção
-
-```yaml
-version: "3.8"
-services:
-  backend:
-    build: ./backend-api
-    ports:
-      - "3001:3001"
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - PORT=3001
-      - NODE_ENV=production
-    restart: unless-stopped
-```
-
-## 5. Health Check
+### 5.1 Build
 
 ```bash
-# Verificar backend
-curl https://api.nexus.grupoX.sd.ufersa.dev.br/health
+cd backend-api
+npm install
+npm run build
+```
 
-# Resposta esperada:
+Isso gera o diretório `dist/` com o código compilado.
+
+### 5.2 Empacotar
+
+```bash
+cd backend-api
+cp -r node_modules dist/
+cd dist
+zip -r ../nexus-api.zip .
+```
+
+### 5.3 Enviar para AWS
+
+```bash
+aws lambda update-function-code \
+  --function-name NexusApi \
+  --zip-file fileb://backend-api/nexus-api.zip \
+  --region us-east-1
+```
+
+### 5.4 Configurar Handler
+
+No console da Lambda, verificar se o handler está configurado como:
+
+```
+dist/handler.handler
+```
+
+A Lambda deve ter integração com API Gateway via proxy (`ANY /{proxy+}`).
+
+## 6. Variáveis de Ambiente da Lambda
+
+Configurar no console AWS Lambda > NexusApi > Environment variables:
+
+| Variável | Valor |
+|----------|-------|
+| JWT_SECRET | nexus-jwt-secret-key-sd-ufersa-2026 |
+| JWT_EXPIRES_IN | 7d |
+| USERS_TABLE | NexusUsers |
+| TASKS_TABLE | NexusTasks |
+
+## 7. Atualizar a Lambda (Deploy Rápido)
+
+```bash
+cd backend-api
+npm run build
+cp -r node_modules dist/
+cd dist && zip -r ../nexus-api.zip . && cd ..
+aws lambda update-function-code \
+  --function-name NexusApi \
+  --zip-file fileb://nexus-api.zip \
+  --region us-east-1
+```
+
+## 8. Testar Endpoints
+
+### Health Check
+```bash
+curl -s https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod/health
 # {"status":"ok","service":"nexus-api"}
+```
+
+### Cadastro
+```bash
+curl -s -X POST https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Teste","email":"teste@email.com","password":"123456"}'
+```
+
+### Login
+```bash
+curl -s -X POST https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@email.com","password":"123456"}'
+```
+
+### Listar Tarefas
+```bash
+TOKEN="<token-do-login>"
+curl -s https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod/tasks \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Criar Tarefa
+```bash
+curl -s -X POST https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod/tasks \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"title":"Nova tarefa","priority":"high"}'
+```
+
+### Estatísticas
+```bash
+curl -s https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod/tasks/stats \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## 9. Frontend
+
+Não requer deploy separado para a API. O frontend já aponta para:
+```
+https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod
+```
+
+Para testar localmente:
+```bash
+cd nexus-task-ui
+npm install
+npm run dev
 ```

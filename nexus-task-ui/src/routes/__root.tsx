@@ -17,6 +17,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TasksProvider } from "@/contexts/TasksContext";
 import { Toaster } from "@/components/ui/sonner";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 function NotFoundComponent() {
   return (
@@ -99,12 +100,14 @@ function RootShell({ children }: { children: ReactNode }) {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
   return (
-    <html lang={i18n.language}>
+    <html lang={i18n.language} translate="no" className="notranslate">
       <head>
         <HeadContent />
+        <meta name="google" content="notranslate" />
       </head>
-      <body>
+      <body className="notranslate">
         {children}
+        <LanguageSwitcher />
         <Scripts />
       </body>
     </html>
