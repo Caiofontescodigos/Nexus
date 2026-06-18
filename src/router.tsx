@@ -5,12 +5,17 @@ import { routeTree } from "./routeTree.gen";
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
-  const router = createRouter({
-    routeTree,
-    context: { queryClient },
-    scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-  });
+  try {
+    const router = createRouter({
+      routeTree,
+      context: { queryClient },
+      scrollRestoration: true,
+      defaultPreloadStaleTime: 0,
+    });
 
-  return router;
+    return router;
+  } catch (err) {
+    console.error("[Nexus Router Init Error]", err);
+    throw err;
+  }
 };
