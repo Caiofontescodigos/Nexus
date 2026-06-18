@@ -4,8 +4,10 @@ import type { Task, User } from "@/types";
 const TOKEN_KEY = "nexus-token";
 const USER_KEY = "nexus-user";
 
+const API_BASE = "https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3001",
+  baseURL: import.meta.env.VITE_API_URL || API_BASE,
   headers: { "Content-Type": "application/json" },
 });
 

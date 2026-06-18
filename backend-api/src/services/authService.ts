@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { userRepository } from "../repositories/userRepository.js";
 import { generateToken } from "../utils/jwt.js";
 import { AppError } from "../utils/errors.js";

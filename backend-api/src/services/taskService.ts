@@ -2,19 +2,14 @@ import { taskRepository } from "../repositories/taskRepository.js";
 import { AppError } from "../utils/errors.js";
 import type { CreateTaskBody, UpdateTaskBody } from "../types/index.js";
 
-function statusFromCompleted(completed: boolean, status?: string): string {
-  if (status && ["pending", "in_progress", "completed"].includes(status)) return status;
-  return completed ? "completed" : "pending";
-}
-
 function mapTask(task: any) {
   return {
     id: task.id,
     title: task.title,
     description: task.description || "",
-    status: statusFromCompleted(task.completed, task.status),
+    status: task.status || (task.completed ? "completed" : "pending"),
     priority: task.priority || "medium",
-    createdAt: task.createdAt?.toISOString?.() || task.createdAt,
+    createdAt: task.createdAt,
     completed: task.completed,
   };
 }
@@ -76,7 +71,7 @@ export const taskService = {
     if (!task) {
       throw new AppError(403, "Forbidden");
     }
-    await taskRepository.update(id, userId, { completed: !task.completed });
+    await taskRepository.update(id, userId, { completed: !task.completed, status: task.completed ? "pending" : "completed" });
     const updated = await taskRepository.findByIdAndUser(id, userId);
     return updated ? mapTask(updated) : null;
   },
