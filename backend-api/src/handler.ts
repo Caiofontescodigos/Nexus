@@ -9,6 +9,7 @@ import { createTaskSchema, updateTaskSchema } from "./schemas/task.js";
 import type { ZodSchema } from "zod";
 
 const corsHeaders = {
+  "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
@@ -36,7 +37,16 @@ function getMethod(event: APIGatewayProxyEvent): string {
 }
 
 function getPath(event: APIGatewayProxyEvent): string {
-  return (event as any).rawPath || event.path || "/";
+  let path = (event as any).rawPath || event.path || "/";
+
+  // HTTP API v2 includes the stage name in rawPath (e.g. /prod/auth/register).
+  // Strip the stage prefix so route matching works against the canonical path.
+  const stage = (event as any).requestContext?.stage;
+  if (stage && path.startsWith(`/${stage}`)) {
+    path = path.slice(stage.length + 1) || "/";
+  }
+
+  return path;
 }
 
 function getBody(event: APIGatewayProxyEvent): any {
