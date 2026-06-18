@@ -6,7 +6,7 @@ info:
   contact:
     name: Nexus Team
 servers:
-  - url: https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com
+  - url: https://w1xqigg0v8.execute-api.us-east-1.amazonaws.com/prod
     description: Produção (AWS API Gateway)
 
 components:
